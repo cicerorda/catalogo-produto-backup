@@ -7,6 +7,7 @@ let grupoAtual = 1;
 const botoesPorGrupo = 10;
 let totalPaginas = 0;
 let categoriasMap = new Map();
+const CATEGORIA_COMPONENTES = "COMPONENTES";
 
 let listaImagens = [];
 let mapaImagemPorNomeLimpo = new Map(); // 🆕 mapa rápido nome → url
@@ -158,7 +159,6 @@ function processarCategoria(categoriaRaw) {
 
   // quebra possíveis múltiplas categorias
   const primeira = categoriaRaw.split(",")[0].trim();
-
   const partes = primeira.split("_");
 
   return {
@@ -263,6 +263,24 @@ function criarListaDeCategorias() {
       ulSub.appendChild(liSub);
     });
 
+    const liComponentes = document.createElement("li");
+    liComponentes.classList.add("subcategoria-item");
+
+    liComponentes.innerHTML = `
+      <label>
+        <input
+          type="checkbox"
+          class="categoria-checkbox"
+          data-tipo="componentes"
+          value="COMPONENTES"
+          onchange="atualizarProdutos(); atualizarEstadoCategorias();"
+        >
+        COMPONENTES
+      </label>
+    `;
+
+    ulSub.appendChild(liComponentes);
+
     liCategoria.appendChild(titulo);
     liCategoria.appendChild(ulSub);
     listaCategorias.appendChild(liCategoria);
@@ -313,19 +331,32 @@ function selecionarCategoriaCompleta(nomeCategoria) {
 }
 
 function obterProdutosFiltrados() {
-  return produtos.filter(p => {
+  const filtrarComponentes = categoriasSelecionadas.has("COMPONENTES");
+
+  return produtos.filter(produto => {
+
+    // 🔹 REGRA COMPONENTES (invertida)
+    const ehComponente = produto.Descricao?.toUpperCase().includes("COMP.");
+
+    if (!filtrarComponentes && ehComponente) {
+      return false; // remove componentes quando NÃO marcado
+    }
+
+    // 🔹 REGRA CATEGORIA (normal)
     const passaCategoria =
       categoriasSelecionadas.size === 0 ||
-      categoriasSelecionadas.has(p.CategoriaCodigo);
+      categoriasSelecionadas.has(produto.CategoriaCodigo);
 
+    // 🔹 REGRA BUSCA
     const passaBusca =
       !termoBusca ||
-      limparTexto(p.Referencia).includes(limparTexto(termoBusca)) ||
-      limparTexto(p.Descricao).includes(limparTexto(termoBusca));
+      limparTexto(produto.Referencia).includes(limparTexto(termoBusca)) ||
+      limparTexto(produto.Descricao).includes(limparTexto(termoBusca));
 
     return passaCategoria && passaBusca;
   });
 }
+
 
 function atualizarProdutos() {
   categoriasSelecionadas.clear();
