@@ -11,6 +11,10 @@ const CATEGORIA_COMPONENTES = "COMPONENTES";
 
 let listaImagens = [];
 let mapaImagemPorNomeLimpo = new Map(); // 🆕 mapa rápido nome → url
+let itensExcluidosDoDownload = new Set(
+  JSON.parse(localStorage.getItem("itensExcluidosDoDownload") || "[]")
+);
+
 
 const BASE_IMAGEKIT_URL = "https://ik.imagekit.io/t7590uzhp/imagens/";
 const URL_SEM_IMAGEM = "https://ik.imagekit.io/t7590uzhp/imagens/sem-imagem_Ga_BH1QVQo.jpg";
@@ -485,26 +489,41 @@ function exibirProdutos(lista) {
     return;
   }
 
-  produtosPagina.forEach(produto => {
-    const card = document.createElement("div");
-    card.classList.add("card");
+    produtosPagina.forEach(produto => {
+      const card = document.createElement("div");
+      card.classList.add("card");
 
-    const caminhoImagem = encontrarImagem(produto.Referencia);
+      const ref = produto.Referencia;
+      const marcado = !itensExcluidosDoDownload.has(ref);
+      const caminhoImagem = encontrarImagem(ref);
 
-    card.innerHTML = `
-      <div class="image-container">
-        <img src="${caminhoImagem}" alt="Imagem do produto"
-          onerror="console.error('❌ Imagem não encontrada:', this.src); this.src='${URL_SEM_IMAGEM}?updatedAt=1745112243066'">
-      </div>
-      <div class="container">
-        <h5>${produto.Referencia || "Sem Referência"}</h5>
-        <p>${produto.Descricao || "Sem Descrição"}</p>
-        <h6>Categoria: ${produto.Categoria || "Sem Categoria"}</h6>
-      </div>
-    `;
+      card.innerHTML = `
+        <div class="image-container">
+          <img src="${caminhoImagem}" alt="Imagem do produto"
+            onerror="this.src='${URL_SEM_IMAGEM}'">
+        </div>
 
-    container.appendChild(card);
-  });
+        <div class="container">
+          <h5>${ref || "Sem Referência"}</h5>
+          <p>${produto.Descricao || "Sem Descrição"}</p>
+          <h6>Categoria: ${produto.Categoria || "Sem Categoria"}</h6>
+
+          <div class="download-flag">
+            <label>
+              <input
+                type="checkbox"
+                ${marcado ? "checked" : ""}
+                onchange="toggleDownload('${ref}')"
+              >
+              Incluir no PDF
+            </label>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+    });
+
 }
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -544,134 +563,124 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function baixarPesquisaEmPDF() {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-    // 🟡 Base para o PDF:
-    // se já temos a lista sem duplicatas (tela atual), reaproveita
-    // se não, cai para obterProdutosFiltrados() como fallback
-    let baseLista = (Array.isArray(listaFiltradaSemDuplicatas) && listaFiltradaSemDuplicatas.length)
-        ? listaFiltradaSemDuplicatas
-        : obterProdutosFiltrados();
+  // 🟡 Base do PDF = o que está na tela
+  let baseLista =
+    (Array.isArray(listaFiltradaSemDuplicatas) && listaFiltradaSemDuplicatas.length)
+      ? listaFiltradaSemDuplicatas
+      : obterProdutosFiltrados();
 
-    if (!baseLista.length) {
-        alert("Nenhum item encontrado.");
-        return;
+  // 🔥 respeita os itens desmarcados no card
+  baseLista = baseLista.filter(
+    p => !itensExcluidosDoDownload.has(p.Referencia)
+  );
+
+  if (!baseLista.length) {
+    alert("Nenhum item selecionado para download.");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // 🟢 Remove duplicados por imagem no PDF
+  const urlsVistas = new Set();
+  const listaSemDuplicatas = [];
+
+  for (const produto of baseLista) {
+    const urlImg = encontrarImagem(produto.Referencia);
+    if (!urlsVistas.has(urlImg)) {
+      urlsVistas.add(urlImg);
+      listaSemDuplicatas.push(produto);
     }
+  }
 
-    // 🟢 Remove duplicados por imagem também no PDF
-    const urlsVistas = new Set();
-    const listaSemDuplicatas = [];
+  if (!listaSemDuplicatas.length) {
+    alert("Nenhum item encontrado.");
+    return;
+  }
 
-    for (const produto of baseLista) {
-        const urlImg = encontrarImagem(produto.Referencia);
+  // 📝 Cabeçalho
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(18);
+  doc.text("Catálogo de Produtos", 10, 15);
 
-        if (!urlsVistas.has(urlImg)) {
-            urlsVistas.add(urlImg);
-            listaSemDuplicatas.push(produto);
-        }
-    }
+  let x = 10, y = 25;
+  const larguraCard = 62;
+  const alturaCard = 62;
+  const imgMaxLargura = 50;
+  const imgMaxAltura = 30;
+  const espacamentoX = 3;
+  const espacamentoY = 3;
+  const colunas = 3;
 
-    if (!listaSemDuplicatas.length) {
-        alert("Nenhum item encontrado.");
-        return;
-    }
+  const promessas = listaSemDuplicatas.map(produto => {
+    return new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve({ produto, img });
+      img.onerror = () => resolve({ produto, img: null });
+      img.src = encontrarImagem(produto.Referencia);
+    });
+  });
 
-    // 📝 Cabeçalho
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
-    doc.text("Catálogo de Produtos", 10, 15);
+  Promise.all(promessas).then(resultados => {
+    resultados.forEach(({ produto, img }, index) => {
 
-    let x = 10, y = 25;
-    const larguraCard = 62;
-    const alturaCard = 62;
-    const imgMaxLargura = 50;
-    const imgMaxAltura = 30;
-    const espacamentoX = 3;
-    const espacamentoY = 3;
-    const colunas = 3;
+      doc.setFillColor(245, 245, 245);
+      doc.roundedRect(x, y, larguraCard, alturaCard, 3, 3, "FD");
 
-    // 🔄 Carrega imagens de todos os produtos (sem duplicatas)
-    const promessas = listaSemDuplicatas.map(produto => {
-        return new Promise(resolve => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => resolve({ produto, img });
-            img.onerror = () => resolve({ produto, img: null });
-            img.src = encontrarImagem(produto.Referencia);
-        });
+      if (img) {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+
+        const base64 = canvas.toDataURL("image/jpeg");
+
+        const escala = Math.min(
+          imgMaxLargura / img.width,
+          imgMaxAltura / img.height
+        );
+
+        doc.addImage(
+          base64,
+          "JPEG",
+          x + (larguraCard - img.width * escala) / 2,
+          y + 5,
+          img.width * escala,
+          img.height * escala
+        );
+      }
+
+      const textoY = y + imgMaxAltura + 12;
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "bold");
+      doc.text(produto.Referencia || "Sem Referência", x + 5, textoY);
+
+      doc.setFont("helvetica", "normal");
+      const desc = doc.splitTextToSize(
+        produto.Descricao || "Sem Descrição",
+        larguraCard - 10
+      );
+      doc.text(desc, x + 5, textoY + 5);
+
+      if ((index + 1) % colunas === 0) {
+        x = 10;
+        y += alturaCard + espacamentoY;
+      } else {
+        x += larguraCard + espacamentoX;
+      }
+
+      if (y + alturaCard > 295) {
+        doc.addPage();
+        y = 25;
+        x = 10;
+      }
     });
 
-    Promise.all(promessas).then(resultados => {
-        resultados.forEach(({ produto, img }, index) => {
-            // Card de fundo
-            doc.setFillColor(245, 245, 245);
-            doc.roundedRect(x, y, larguraCard, alturaCard, 3, 3, "FD");
-
-            // Imagem (se carregou)
-            if (img) {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0);
-                const base64 = canvas.toDataURL("image/jpeg");
-
-                const escala = Math.min(
-                    imgMaxLargura / img.width,
-                    imgMaxAltura / img.height
-                );
-                const imgLarguraAjustada = img.width * escala;
-                const imgAlturaAjustada = img.height * escala;
-
-                doc.addImage(
-                    base64,
-                    "JPEG",
-                    x + (larguraCard - imgLarguraAjustada) / 2,
-                    y + 5,
-                    imgLarguraAjustada,
-                    imgAlturaAjustada
-                );
-            }
-
-            const textoY = y + imgMaxAltura + 12;
-            doc.setFontSize(9);
-            doc.setTextColor(0, 0, 0);
-            doc.setFont("helvetica", "bold");
-            doc.text((produto.Referencia || "Sem Referência").toString(), x + 5, textoY);
-
-            doc.setFont("helvetica", "normal");
-            const desc = doc.splitTextToSize(
-                (produto.Descricao || "Sem Descrição").toString(),
-                larguraCard - 10
-            );
-            doc.text(desc, x + 5, textoY + 5);
-
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(8);
-            doc.setTextColor(100);
-            //doc.text(`Cat: ${produto.CategoriaNome} (${produto.CategoriaCodigo})`, x + 5, textoY + 15);
-
-            // Próximo card (3 colunas)
-            if ((index + 1) % colunas === 0) {
-                x = 10;
-                y += alturaCard + espacamentoY;
-            } else {
-                x += larguraCard + espacamentoX;
-            }
-
-            // Próxima página se precisar
-            if (y + alturaCard > 295) {
-                doc.addPage();
-                y = 25;
-                x = 10;
-            }
-
-            doc.setTextColor(0, 0, 0);
-        });
-
-        doc.save("catalogo_produtos.pdf");
-    });
+    doc.save("catalogo_produtos.pdf");
+  });
 }
 
 console.log("Verificando jsPDF:", window.jspdf);
@@ -685,6 +694,19 @@ function gerarRelatorioSemImagem() {
         Descricao: p.Descricao,
         Categoria: p.Categoria
     })));
+}
+
+function toggleDownload(referencia) {
+  if (itensExcluidosDoDownload.has(referencia)) {
+    itensExcluidosDoDownload.delete(referencia);
+  } else {
+    itensExcluidosDoDownload.add(referencia);
+  }
+
+  localStorage.setItem(
+    "itensExcluidosDoDownload",
+    JSON.stringify([...itensExcluidosDoDownload])
+  );
 }
 
 // Chamar após carregar tudo

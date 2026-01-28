@@ -289,3 +289,30 @@ footer {
     display: none;
   }
 }
+
+.download-flag {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.download-flag label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: #444;
+}
+
+.download-flag input {
+  cursor: pointer;
+}
+
+.card.excluido {
+  opacity: 0.45;
+  filter: grayscale(100%);
+  transition: 0.2s ease;
+}
+
+.card.excluido:hover {
+  opacity: 0.7;
+}
