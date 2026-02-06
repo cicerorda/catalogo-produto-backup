@@ -1,6 +1,6 @@
 let produtos = [];
 let paginaAtual = 1;
-const itensPorPagina = 27;
+const itensPorPagina = 25;
 let categoriasSelecionadas = new Set();
 let termoBusca = "";
 let grupoAtual = 1;
@@ -15,6 +15,80 @@ let itensExcluidosDoDownload = new Set(
   JSON.parse(localStorage.getItem("itensExcluidosDoDownload") || "[]")
 );
 
+const MAPA_SUBCATEGORIAS = {
+  "30_40_010": "ARGOLAS",
+  "30_40_020": "MEIAS ARGOLAS",
+  "30_40_030": "QUADROS",
+  "30_40_040": "REGULADORES",
+  "30_40_050": "FIVELAS",
+  "30_40_060": "PASSADORES",
+  "30_40_070": "PINOS",
+  "30_40_110": "ENFEITES",
+
+  "30_50_010": "FIVELAS",
+  "30_50_020": "PONTEIRAS",
+  "30_50_030": "PASSADORES",
+  "30_50_040": "ARGOLAS",
+  "30_50_050": "PUXADORES",
+  "30_50_060": "PINGENTES",
+  "30_50_070": "TACHAS E PREGOS",
+  "30_50_080": "MEIAS ARGOLAS",
+  "30_50_090": "BOTÕES",
+  "30_50_100": "ILHÓS",
+  "30_50_110": "ACESSÓRIOS",
+  "30_50_120": "PLACAS",
+  "30_50_130": "MANUSCRITOS",
+  "30_50_140": "CONTRA CHAPAS",
+  "30_50_150": "BRIDÕES",
+  "30_50_160": "CORRENTES",
+  "30_50_170": "BATOQUES",
+  "30_50_180": "PIERCING",
+
+  "30_60_020": "TUBOS",
+
+  "30_75_010": "PEÇAS EM LATÃO",
+
+  "30_80_010": "BOTÕES",
+  "30_80_020": "ARGOLAS (AR)",
+  "30_80_030": "CRAVOS",
+  "30_80_040": "ILHÓS E ARRUELAS",
+  "30_80_050": "PINOS",
+  "30_80_060": "GARRAS",
+  "30_80_070": "REBOQUES",
+  "30_80_080": "MOSQUETÕES",
+  "30_80_100": "REBITE CABEÇA",
+  "30_80_110": "REBITE PÉ",
+  "30_80_120": "CORRENTES",
+  "30_80_130": "BRINCOS",
+  "30_80_140": "TUBOS",
+  "30_80_150": "ACESSÓRIOS",
+  "30_80_160": "CURSORES (DESLIZADORES)",
+  "30_80_170": "HASTES",
+
+  "40_20_010": "FIVELA PINO BRUTA",
+  "40_20_020": "ETIQ. TRIÂNGULO",
+  "40_20_030": "ENF. CONJ. ARG. CORRENTE",
+  "40_20_040": "ENF. PONTEIRA",
+
+  "40_40_010": "CONJ. FIV",
+  "40_40_020": "CONJ. PIRÂMIDE",
+  "40_40_030": "PLACA BIMETAL",
+
+  "30_90_CLASSIFICAR": "CLASSIFICAR"
+};
+
+const MAPA_CATEGORIAS = {
+  "30_20": "BORRACHAS",
+  "30_40": "PEÇAS EM ARAME",
+  "30_50": "PEÇAS EM ZAMAC",
+  "30_60": "PEÇAS EM AÇO",
+  "30_75": "PEÇAS EM LATÃO",
+  "30_80": "COMPONENTES BANHADOS",
+  "30_90": "CLASSIFICAR",
+
+  "40_20": "ENFEITES",
+  "40_40": "CONJUNTOS"
+};
 
 const BASE_IMAGEKIT_URL = "https://ik.imagekit.io/t7590uzhp/imagens/";
 const URL_SEM_IMAGEM = "https://ik.imagekit.io/t7590uzhp/imagens/sem-imagem_Ga_BH1QVQo.jpg";
@@ -164,16 +238,18 @@ fetch("imagens.json")
 function processarCategoria(categoriaRaw) {
   if (!categoriaRaw) return null;
 
-  // quebra possíveis múltiplas categorias
   const primeira = categoriaRaw.split(",")[0].trim();
   const partes = primeira.split("_");
 
+  const codigoSub = partes.slice(0, 3).join("_"); // 30_40_010
+  const codigoCat = partes.slice(0, 2).join("_"); // 30_40
+
   return {
-    codigo: partes.slice(0, 3).join("_"), // 30_50_030
-    nome: partes.slice(3).join("_")       // PASSADORES
+    codigo: codigoSub,
+    codigoCategoria: codigoCat,
+    nomeCategoria: MAPA_CATEGORIAS[codigoCat] || codigoCat
   };
 }
-
 
 fetch("produtos.json")
   .then(res => res.json())
@@ -187,14 +263,19 @@ fetch("produtos.json")
 
       const cat = processarCategoria(produto.Categoria);
 
-      produto.CategoriaNome = cat.nome;
-      produto.CategoriaCodigo = cat.codigo;
+      produto.CategoriaNome = cat.nomeCategoria;   // PEÇAS EM ARAME
+      produto.CategoriaCodigo = cat.codigo;        // 30_40_010
+      produto.CategoriaPai = cat.codigoCategoria;  // 30_40
 
-      if (!categoriasMap.has(cat.nome)) {
-        categoriasMap.set(cat.nome, new Set());
+
+      if (!categoriasMap.has(produto.CategoriaNome)) {
+        categoriasMap.set(produto.CategoriaNome, new Set());
       }
 
-      categoriasMap.get(cat.nome).add(cat.codigo);
+      categoriasMap
+        .get(produto.CategoriaNome)
+        .add(produto.CategoriaCodigo);
+
     });
 
     criarListaDeCategorias();
@@ -263,7 +344,9 @@ function criarListaDeCategorias() {
             value="${codigo}"
             onchange="atualizarProdutos(); atualizarEstadoCategorias();"
           >
-          <span class="codigo-categoria">${codigo}</span>
+          <span class="codigo-categoria">
+            ${MAPA_SUBCATEGORIAS[codigo] || codigo}
+          </span>
         </label>
       `;
 
