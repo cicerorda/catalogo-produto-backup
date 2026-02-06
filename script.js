@@ -30,6 +30,9 @@ let listaFiltradaSemDuplicatas = []; // filtrado + 1 por imagem
 
 console.log("✅ script.js foi carregado!");
 
+localStorage.removeItem("itensExcluidosDoDownload");
+itensExcluidosDoDownload.clear();
+
 function gerarVariantesComCache(ref) {
   if (cacheVariantes.has(ref)) return cacheVariantes.get(ref);
   const variantes = gerarVariantes(ref);
