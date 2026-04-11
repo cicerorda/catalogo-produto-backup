@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <script src="header.js"></script>
+    <script>
+    renderHeader({ mostrarBusca: false, mostrarUser: false });
+    </script>
+  <div class="login-container">
+    <div class="login-box">
+      <h2>🔐 Acesso ao Catálogo</h2>
+
+      <input type="text" id="user" placeholder="Usuário">
+      <input type="password" id="senha" placeholder="Senha">
+
+      <button onclick="login()">Entrar</button>
+    </div>
+  </div>
+
+  <script>
+    const USERS = {
+      custo: "R7k9x2",
+      representante: "M4p8q1",
+      visualizacoes: "Z6n3w5"
+    };
+
+    function login() {
+      const user = document.getElementById("user").value;
+      const senha = document.getElementById("senha").value;
+
+      if (USERS[user] && USERS[user] === senha) {
+        localStorage.setItem("logado", "true");
+        localStorage.setItem("usuario", user);
+
+        window.location.href = "index.html";
+      } else {
+        alert("Usuário ou senha inválidos");
+      }
+    }
+  </script>
+
+</body>
+</html>

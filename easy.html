@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Easy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<script src="header.js"></script>
+<script>
+  renderHeader({ mostrarBusca: false, mostrarUser: true });
+</script>
+
+<div class="easy-container">
+  <div class="easy-box">
+
+    <h2>📦 Cadastro Categoria Easy</h2>
+
+    <div class="easy-form">
+      <input type="text" id="referencia" placeholder="Referência">
+      <input type="text" id="banho" placeholder="Banho">
+      <input type="number" id="valor" placeholder="Valor">
+    </div>
+
+    <div class="easy-actions">
+      <button onclick="adicionarItem()">➕ Adicionar</button>
+      <button onclick="baixarCSV()">📥 Exportar</button>
+    </div>
+
+    <div id="lista-itens" class="easy-list"></div>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+<script src="easy.js"></script>
+
+</body>
+</html>

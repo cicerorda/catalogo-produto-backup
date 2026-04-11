@@ -23,7 +23,6 @@ body {
   width: 100%;
   background-color: #952730;
   padding: 1em;
-  text-align: center;
   position: fixed;
   top: 0;
   left: 0;
@@ -38,6 +37,25 @@ body {
   border: 1px solid #ddd;
   font-size: 16px;
   text-align: center;
+}
+
+.logo {
+  height: 40px;
+  object-fit: contain;
+}
+
+.navbar-content {
+  display: flex;
+  max-width: 800px;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.navbar input {
+  flex: 1;
+  max-width: 500px;
 }
 
 /* ===========================
@@ -315,4 +333,195 @@ footer {
 
 .card.excluido:hover {
   opacity: 0.7;
+}
+
+.filter-content textarea {
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* ===========================
+   LOGIN
+   =========================== */
+
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.login-box {
+  background-color: #222;
+  padding: 30px;
+  border-radius: 10px;
+  width: 320px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.login-box h2 {
+  color: #fff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.login-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+.login-box button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  background-color: #d4af37;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.login-box button:hover {
+  background-color: #b08c28;
+}
+
+/* ===========================
+   USUÁRIO / LOGOUT
+   =========================== */
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#usuario-logado {
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-info button {
+  background-color: #d4af37;
+  color: #000;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.user-info button:hover {
+  background-color: #b08c28;
+}
+
+/* ===========================
+   EASY PAGE
+   =========================== */
+
+.easy-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 100px;
+}
+
+.easy-box {
+  background: #222;
+  padding: 20px;
+  border-radius: 10px;
+  width: 400px;
+}
+
+.easy-box input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+}
+
+.easy-box button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 20px;
+  border: none;
+  background-color: #d4af37;
+  cursor: pointer;
+}
+
+.easy-box button:hover {
+  background-color: #b08c28;
+}
+
+#lista-itens {
+  color: white;
+  font-size: 13px;
+  margin-top: 10px;
+}
+
+.easy-box h2 {
+  color: #fff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.easy-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.easy-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.easy-actions button {
+  flex: 1;
+}
+
+/* Lista estilizada */
+.easy-list {
+  margin-top: 20px;
+}
+
+.easy-item {
+  background: #333;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.easy-item span {
+  color: #d4af37;
+}
+
+/* Botão Easy */
+.btn-easy {
+  background-color: #952730;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-easy:hover {
+  background-color: #b03a45;
 }

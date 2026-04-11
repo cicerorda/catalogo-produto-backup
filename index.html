@@ -9,9 +9,10 @@
 <body>
     <div class="container-layout">
         <!--  Barra de Navegação -->
-        <div class="navbar">
-            <input type="search" id="search-input" placeholder="Buscar produto..." onkeyup="atualizarProdutos()">
-        </div>
+        <script src="header.js"></script>
+        <script>
+        renderHeader({ mostrarBusca: true, mostrarUser: true });
+        </script>
 
     <div id="sidebar">
         <!--  Filtro de Categorias (Dropdown) -->
